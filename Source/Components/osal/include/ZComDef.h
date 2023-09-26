@@ -259,6 +259,8 @@ extern "C"
 // NV Items Reserved for applications (user applications)
 // 0x0401 – 0x0FFF
 
+#define ZCD_NV_LIGHT_ONOFF_STATUS               0x0401
+#define ZCD_NV_LIGHT_LEVEL                      0x0402
 
 // ZCD_NV_STARTUP_OPTION values
 //   These are bit weighted - you can OR these together.

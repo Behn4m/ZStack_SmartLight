@@ -1200,7 +1200,7 @@
           <state>ZCL_LEVEL_CTRL</state>
           <state>ZCL_DIAGNOSTIC</state>
           <state>FEATURE_SYSTEM_STATS</state>
-          <state>xHAL_PWM</state>
+          <state>HAL_PWM</state>
           <state>xHAL_LED=FALSE</state>
         </option>
         <option>

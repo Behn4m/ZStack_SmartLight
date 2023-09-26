@@ -301,24 +301,15 @@ extern void MAC_RfFrontendSetup(void);
 #define BLUE_LED  HAL_T1_CH2
 #define GREEN_LED HAL_T1_CH3
 
-#define PWM_LED_BASE                GPIO_C_BASE
-#define PWM_LED_1                   GPIO_PIN_4
-#define PWM_LED_2                   GPIO_PIN_5
-#define PWM_LED_3                   GPIO_PIN_6
-#define PWM_LED_4                   GPIO_PIN_7
-#define PWM_LED_ALL                 (PWM_LED_1|PWM_LED_2|PWM_LED_3|PWM_LED_4)
+#define PWM_LED_BASE                GPIO_A_BASE
+#define PWM_LED_1                   GPIO_PIN_2
+#define PWM_LED_ALL                (PWM_LED_1)
 
 //Enable LEDs: Enable PAD
 #define ENABLE_LAMP1   IOCPadConfigSet(PWM_LED_BASE, PWM_LED_1, IOC_OVERRIDE_OE);
-#define ENABLE_LAMP2   IOCPadConfigSet(PWM_LED_BASE, PWM_LED_2, IOC_OVERRIDE_OE);
-#define ENABLE_LAMP3   IOCPadConfigSet(PWM_LED_BASE, PWM_LED_3, IOC_OVERRIDE_OE);
-#define ENABLE_LAMP4   IOCPadConfigSet(PWM_LED_BASE, PWM_LED_4, IOC_OVERRIDE_OE);
 
 //Disable LEDs: Disable PAD 
 #define DISABLE_LAMP1  IOCPadConfigSet(PWM_LED_BASE, PWM_LED_1, IOC_OVERRIDE_DIS);
-#define DISABLE_LAMP2  IOCPadConfigSet(PWM_LED_BASE, PWM_LED_2, IOC_OVERRIDE_DIS);
-#define DISABLE_LAMP3  IOCPadConfigSet(PWM_LED_BASE, PWM_LED_3, IOC_OVERRIDE_DIS);
-#define DISABLE_LAMP4  IOCPadConfigSet(PWM_LED_BASE, PWM_LED_4, IOC_OVERRIDE_DIS);
 
 
 #define INIT_PWM_PINS()                                                     \
@@ -334,12 +325,6 @@ extern void MAC_RfFrontendSetup(void);
     /* Hook up GPIO pins to internal timer signal Timer0A */                \
     IOCPinConfigPeriphOutput(PWM_LED_BASE, PWM_LED_1,                       \
                              IOC_MUX_OUT_SEL_GPT0_ICP1);                    \
-    IOCPinConfigPeriphOutput(PWM_LED_BASE, PWM_LED_2,                       \
-                             IOC_MUX_OUT_SEL_GPT0_ICP2);                    \
-    IOCPinConfigPeriphOutput(PWM_LED_BASE, PWM_LED_3,                       \
-                             IOC_MUX_OUT_SEL_GPT1_ICP1);                    \
-    IOCPinConfigPeriphOutput(PWM_LED_BASE, PWM_LED_4,                       \
-                             IOC_MUX_OUT_SEL_GPT1_ICP2);                    \
 }
 #else
 #define INIT_PWM_PINS()

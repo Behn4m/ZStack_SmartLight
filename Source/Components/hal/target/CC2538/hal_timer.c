@@ -79,7 +79,7 @@
 /*********************************************************************
  * CONSTANTS
  */
-#define PWM_PERIOD 1000
+#define PWM_PERIOD 64000
 
 /*********************************************************************
  * FUNCTIONS - External
@@ -120,7 +120,11 @@ void HalTimer1Init (halTimerCBack_t cBack)
   //
   TimerConfigure(GPTIMER0_BASE, GPTIMER_CFG_SPLIT_PAIR |
                  GPTIMER_CFG_A_PWM);
-
+  
+  //TimerPrescaleSet(GPTIMER0_BASE,GPTIMER_A,4);//farhad
+  //TimerPrescaleMatchSet(GPTIMER0_BASE,GPTIMER_A,2);//farhad
+  
+  
   //
   // Set Duty cycle and enable
   //
@@ -163,7 +167,7 @@ void halTimer1SetChannelDuty (uint8 channel, uint16 promill)
 {
   if(channel == 0)
   {
-    uint32 timerAMatch = (PWM_PERIOD * (100-promill)) / 100;
+    uint32 timerAMatch = (PWM_PERIOD * (promill)) / 100;
     
     if(timerAMatch == PWM_PERIOD)
     {

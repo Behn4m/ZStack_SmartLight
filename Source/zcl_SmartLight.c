@@ -79,8 +79,10 @@
 #include "math.h"
 #include "hal_timer.h"
 #endif
-
 #include "NLMEDE.h"
+/*****farhad******/
+#include "aps_groups.h" 
+
 
 /*********************************************************************
  * MACROS
@@ -97,7 +99,7 @@
 #elif (defined HAL_PWM)
 #define LEVEL_MAX                 0xFE
 #define LEVEL_MIN                 0x0
-#define GAMMA_VALUE               2
+#define GAMMA_VALUE               1
 #define PWM_FULL_DUTY_CYCLE       100
 #endif
 
@@ -126,6 +128,8 @@ uint16 adc_value;//farhad
 uint8 Mv_Cnt;//farhad
 bool PIR_flag = TRUE;//farhad
 uint8 zclOccupancySensor_LastOccupancy = 0x00;//farhad
+
+aps_Group_t light_group1; //farhad
 
 afAddrType_t zclLight_DimmableLight_DstAddr;
 afAddrType_t zclLight_LightSensor_DstAddr;
@@ -366,22 +370,45 @@ void zclLight_Init( byte task_id )
 #endif
 
 
+  light_group1.ID =1;
+  light_group1.name[1] = 'L';
+  light_group1.name[2] = 'E';
+  light_group1.name[3] = 'D';
+  light_group1.name[4] = '1';
+  aps_AddGroup( DimmableLight_ENDPOINT, &light_group1 );
+  /****************************************/   
+  
+    /*************Restore Light1 Status from NV***********************************/
+  if (ZSUCCESS == osal_nv_item_init( ZCD_NV_LIGHT_ONOFF_STATUS,1, (void *)&zclLight_DimmableLight_OnOff))
+  {
+    osal_nv_read( ZCD_NV_LIGHT_ONOFF_STATUS, 0, 1, (void *)&zclLight_DimmableLight_OnOff );
+  } 
+  
+ /***************Restore Light Level From NV****************/ 
+  
+  /*************Restore Light1 Level from NV***********************************/
+  if (ZSUCCESS == osal_nv_item_init( ZCD_NV_LIGHT_LEVEL,1, (void *)&zclLight_DimmableLight_LevelCurrentLevel))
+  {
+    osal_nv_read( ZCD_NV_LIGHT_LEVEL, 0, 1, (void *)&zclLight_DimmableLight_LevelCurrentLevel );
+  }
+ 
+  
 #if (defined HAL_BOARD_ZLIGHT) || (defined HAL_PWM)
   HalTimer1Init( 0 );
-  halTimer1SetChannelDuty( WHITE_LED, 0 );
-  halTimer1SetChannelDuty( RED_LED, 0 );
-  halTimer1SetChannelDuty( BLUE_LED, 0 );
-  halTimer1SetChannelDuty( GREEN_LED, 0 );
-
+//  halTimer1SetChannelDuty( 0, 0 );
+//  halTimer1SetChannelDuty( 1, 0 );
+//  halTimer1SetChannelDuty( 2, 0 );
+//  halTimer1SetChannelDuty( 3, 0 );
   // find if we are already on a network from NV_RESTORE
   uint8 state;
   NLME_GetRequest( nwkNwkState, 0, &state );
-
+ // osal_start_timerEx( zclLight_TaskID, PWM_EVT, 500 );//mine
   if ( state < NWK_ENDDEVICE )
   {
     // Start EZMode on Start up to avoid button press
     osal_start_timerEx( zclLight_TaskID, LIGHT_START_EZMODE_EVT, 500 );
-  }
+  }  
+
 #if ZCL_LEVEL_CTRL
   zclLight_DimmableLight_DefaultMove();
 #endif
@@ -831,11 +858,13 @@ static void zclLight_DimmableLight_OnOffCB( uint8 cmd )
   if ( cmd == COMMAND_ON )
   {
     zclLight_DimmableLight_OnOff = LIGHT_ON;
+    osal_nv_write( ZCD_NV_LIGHT_ONOFF_STATUS,0, 1, (void *)&zclLight_DimmableLight_OnOff );
   }
   // Turn off the light
   else if ( cmd == COMMAND_OFF )
   {
     zclLight_DimmableLight_OnOff = LIGHT_OFF;
+    osal_nv_write( ZCD_NV_LIGHT_ONOFF_STATUS,0, 1, (void *)&zclLight_DimmableLight_OnOff );
   }
   // Toggle the light
   else if ( cmd == COMMAND_TOGGLE )
@@ -843,19 +872,18 @@ static void zclLight_DimmableLight_OnOffCB( uint8 cmd )
     if ( zclLight_DimmableLight_OnOff == LIGHT_OFF )
     {
       zclLight_DimmableLight_OnOff = LIGHT_ON;
+      osal_nv_write( ZCD_NV_LIGHT_ONOFF_STATUS,0, 1, (void *)&zclLight_DimmableLight_OnOff );
     }
     else
     {
       zclLight_DimmableLight_OnOff = LIGHT_OFF;
+      osal_nv_write( ZCD_NV_LIGHT_ONOFF_STATUS,0, 1, (void *)&zclLight_DimmableLight_OnOff );
     }
   }
 
 #if ZCL_LEVEL_CTRL
   zclLight_DimmableLight_DefaultMove( );
 #endif
-
-  // update the display
-  zclLight_LcdDisplayUpdate( );
 }
 
 #ifdef ZCL_LEVEL_CTRL
@@ -1000,57 +1028,18 @@ static uint16 zclLight_DimmableLight_GetTime( uint8 level, uint16 time )
  */
 static void zclLight_DimmableLight_DefaultMove( void )
 {
-  uint8  newLevel;
-  uint32 rate;      // fixed point decimal (3 places, eg. 16.345)
-  uint16 time;
-
   // if moving to on position, move to on level
   if ( zclLight_DimmableLight_OnOff )
-  {
-    if ( zclLight_DimmableLight_LevelOnLevel == ATTR_LEVEL_ON_LEVEL_NO_EFFECT )
-    {
-      // The last Level (before going OFF) should be used)
-      newLevel = zclLight_DimmableLight_LevelLastLevel;
-    }
-    else
-    {
-      newLevel = zclLight_DimmableLight_LevelOnLevel;
-    }
-
-    time = zclLight_DimmableLight_LevelOnTransitionTime;
+  { 
+    zclLight_UpdateLampLevel(zclLight_DimmableLight_LevelCurrentLevel);
   }
   else
   {
-    newLevel = ATTR_LEVEL_MIN_LEVEL;
-
-    if ( zclLight_DimmableLight_LevelOnLevel == ATTR_LEVEL_ON_LEVEL_NO_EFFECT )
-    {
       // Save the current Level before going OFF to use it when the light turns ON
       // it should be back to this level
-      zclLight_DimmableLight_LevelLastLevel = zclLight_DimmableLight_LevelCurrentLevel;
-    }
-
-    time = zclLight_DimmableLight_LevelOffTransitionTime;
+//      zclLight1_LevelLastLevel = zclLight_DimmableLight_LevelCurrentLevel;
+    halTimer1SetChannelDuty (0,0);
   }
-
-  // else use OnOffTransitionTime if set (not 0xffff)
-  if ( time == 0xFFFF )
-  {
-    time = zclLight_DimmableLight_LevelOnOffTransitionTime;
-  }
-
-  // else as fast as possible
-  if ( time == 0xFFFF )
-  {
-    time = 1;
-  }
-
-  // calculate rate based on time (int 10ths) for full transition (1-254)
-  rate = 255000 / time;    // units per tick, fixed point, 3 decimal places (e.g. 8500 = 8.5 units per tick)
-
-  // start up state machine.
-  zclLight_DimmableLight_WithOnOff = TRUE;
-  zclLight_DimmableLight_MoveBasedOnRate( newLevel, rate );
 }
 
 /*********************************************************************
@@ -1074,6 +1063,7 @@ static void zclLight_DimmableLight_AdjustLightLevel( void )
   if ( zclLight_DimmableLight_LevelRemainingTime == 0)
   {
     zclLight_DimmableLight_LevelCurrentLevel = zclLight_DimmableLight_NewLevel;
+    osal_nv_write( ZCD_NV_LIGHT_LEVEL,0, 1, (void *)&zclLight_DimmableLight_LevelCurrentLevel );
   }
 
   // still time left, keep increment/decrementing
@@ -1088,6 +1078,7 @@ static void zclLight_DimmableLight_AdjustLightLevel( void )
       zclLight_DimmableLight_CurrentLevel32 -= zclLight_DimmableLight_Rate32;
     }
     zclLight_DimmableLight_LevelCurrentLevel = (uint8)( zclLight_DimmableLight_CurrentLevel32 / 1000 );
+    osal_nv_write( ZCD_NV_LIGHT_LEVEL,0, 1, (void *)&zclLight_DimmableLight_LevelCurrentLevel );
   }
 
 #if (defined HAL_BOARD_ZLIGHT) || (defined HAL_PWM)
@@ -1100,21 +1091,25 @@ static void zclLight_DimmableLight_AdjustLightLevel( void )
     if ( zclLight_DimmableLight_LevelCurrentLevel > ATTR_LEVEL_MIN_LEVEL )
     {
       zclLight_DimmableLight_OnOff = LIGHT_ON;
+      osal_nv_write( ZCD_NV_LIGHT_ONOFF_STATUS,0, 1, (void *)&zclLight_DimmableLight_OnOff );
 #if (defined HAL_BOARD_ZLIGHT) || (defined HAL_PWM)
-      ENABLE_LAMP;
+      ENABLE_LAMP1;
 #endif
     }
     else
     {
       zclLight_DimmableLight_OnOff = LIGHT_OFF;
+      osal_nv_write( ZCD_NV_LIGHT_ONOFF_STATUS,0, 1, (void *)&zclLight_DimmableLight_OnOff );
 #if (defined HAL_BOARD_ZLIGHT) || (defined HAL_PWM)
-      DISABLE_LAMP;
+//      DISABLE_LAMP1;
+      halTimer1SetChannelDuty( 0, 0 );
+//      GPIOPinWrite(PWM_LED_BASE, PWM_LED_1, PWM_LED_1);
 #endif
     }
   }
 
   // display light level as we go
-  zclLight_DisplayLight( );
+//  zclLight_DisplayLight( );
 
   // keep ticking away
   if ( zclLight_DimmableLight_LevelRemainingTime )

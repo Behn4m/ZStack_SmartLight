@@ -209,7 +209,7 @@ void HalKeyConfig( bool interruptEnable, halKeyCBack_t cback)
     ioPinIntRegister(BSP_KEY_BASE,BSP_KEY_ALL, &interrupt_keybd);
     ioPinIntRegister(BSP_OCCSENSOR_BASE,BSP_OCCSENSOR, &interrupt_OCC_sensor);
     // Set trigger type
-    GPIOIntTypeSet(BSP_KEY_BASE,BSP_KEY_ALL, GPIO_FALLING_EDGE); 
+    GPIOIntTypeSet(BSP_KEY_BASE,BSP_KEY_ALL, GPIO_RISING_EDGE); 
     GPIOIntTypeSet(BSP_OCCSENSOR_BASE,BSP_OCCSENSOR, GPIO_BOTH_EDGES); 
     
     GPIOPinIntEnable(BSP_KEY_BASE,BSP_KEY_ALL);

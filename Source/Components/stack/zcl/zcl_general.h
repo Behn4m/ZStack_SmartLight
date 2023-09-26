@@ -405,12 +405,12 @@ extern "C"
 #define ATTR_DEFAULT_LEVEL_CURRENT_LEVEL                  0
 #define ATTR_DEFAULT_LEVEL_REMAINING_TIME                 0
 #define ATTR_DEFAULT_LEVEL_ON_OFF_TRANSITION_TIME         0
-#define ATTR_DEFAULT_LEVEL_ON_LEVEL                       0xFE
+#define ATTR_DEFAULT_LEVEL_ON_LEVEL                       0xFF
 #define ATTR_DEFAULT_LEVEL_ON_TRANSITION_TIME             0
 #define ATTR_DEFAULT_LEVEL_OFF_TRANSITION_TIME            0
 #define ATTR_DEFAULT_LEVEL_DEFAULT_MOVE_RATE              0
 
-#define ATTR_LEVEL_MAX_LEVEL                              0xFE   // MAX level
+#define ATTR_LEVEL_MAX_LEVEL                              0xFF   // MAX level
 #define ATTR_LEVEL_MIN_LEVEL                              0x01   // MIN level
 #define ATTR_LEVEL_MID_LEVEL                              0x7E   // MID level
 #define ATTR_LEVEL_ON_LEVEL_NO_EFFECT                     0xFF
